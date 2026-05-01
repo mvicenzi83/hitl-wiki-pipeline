@@ -1,0 +1,5 @@
+# hitl-wiki-pipeline dependencies
+# Python 3.11+ required (uses tomllib from stdlib)
+
+requests>=2.28.0
+watchdog>=3.0.0

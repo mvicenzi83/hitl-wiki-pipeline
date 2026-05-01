@@ -1,0 +1,101 @@
+# ============================================================
+# hitl-wiki-pipeline — Configuration
+#
+# Copy this file to config.toml and fill in your paths.
+# config.toml is .gitignored — never commit it.
+# ============================================================
+
+[paths]
+# Root of your raw source documents folder
+raw_base       = "./raw"
+
+# Root of your wiki output folder
+wiki_base      = "./wiki"
+
+# Where proposal files are written (for human review in Obsidian)
+proposals_dir  = "./pending_ingests"
+
+# Where candidate JSON files are written (output of extract_candidates.py)
+candidates_dir = "./candidates"
+
+# ============================================================
+# Domain configuration — add one [[domains]] block per domain.
+# The pipeline supports multiple domains (ai, lytro, ideas, etc.)
+# ============================================================
+
+[[domains]]
+name          = "ai"
+raw           = "./raw/ai"
+wiki          = "./wiki/ai"
+health_report = "./wiki/ai/health-report.md"
+
+# Uncomment and edit to add more domains:
+# [[domains]]
+# name          = "lytro"
+# raw           = "./raw/lytro"
+# wiki          = "./wiki/lytro"
+# health_report = "./wiki/lytro/health-report.md"
+
+# ============================================================
+# Confidence scoring
+# ============================================================
+
+[confidence]
+# Pages below this threshold are flagged as "fragile" in the health report
+threshold = 1.5
+
+# Baseline score guaranteed to every existing page (prevents new pages starting at 0.0)
+base_score = 1.0
+
+# Maximum additional bonus for well-developed content (above word_target words)
+word_bonus_max = 1.0
+
+# Word count needed to earn the maximum bonus
+word_target = 300
+
+# ============================================================
+# Entity extraction
+# ============================================================
+
+[extraction]
+# Minimum occurrences to include a concept (kebab-case, phrases)
+min_count_concept = 2
+
+# Minimum occurrences to include a tool/software name (CamelCase, named entity)
+min_count_tool = 1
+
+# ============================================================
+# LLM settings
+# ============================================================
+
+[llm]
+# API format. Options:
+#   "ollama"  -> Ollama native API (/api/chat) — most stable for local use
+#   "openai"  -> OpenAI-compatible endpoint (/v1/chat/completions) — for cloud providers
+api_format = "openai"
+
+# Base URL of your LLM provider. Examples:
+#   Local Ollama (api_format=ollama):          http://localhost:11434
+#   Local Ollama (OpenAI-compat, api_format=openai): http://localhost:11434/v1
+#   Google AI Studio (api_format=openai):      https://generativelanguage.googleapis.com/v1beta/openai
+#   OpenRouter (api_format=openai):            https://openrouter.ai/api/v1
+base_url = "http://localhost:11434/v1"
+
+# Model name. Examples:
+#   Ollama local:   gemma3:27b  |  llama3.2:3b  |  mistral:7b
+#   AI Studio:      gemma-3-27b-it
+#   OpenRouter:     google/gemma-3-27b-it  |  google/gemini-2.0-flash-001
+model = "gemma3:27b"
+
+# Name of the environment variable that holds your API key.
+# For local Ollama you can leave it empty ("") or set OLLAMA_API_KEY=ollama.
+# For cloud providers, set the env var before running the watcher.
+#   export OPENROUTER_API_KEY=sk-or-...
+#   export GOOGLE_API_KEY=AIza...
+api_key_env = "OLLAMA_API_KEY"
+
+# Where draft files are written (for human review before publishing to wiki)
+drafts_dir = "./drafts"
+
+# How many characters of the raw source to include in each LLM prompt
+source_excerpt_chars = 3000

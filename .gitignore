@@ -1,0 +1,21 @@
+# Local configuration — never commit
+config.toml
+
+# Generated pipeline output — local to your vault
+candidates/
+pending_ingests/
+drafts/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+
+# Environment variables
+.env
+
+# OS
+.DS_Store
+Thumbs.db
