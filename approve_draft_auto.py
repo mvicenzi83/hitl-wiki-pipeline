@@ -16,7 +16,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from utils import load_config, get_domains, update_wiki_home, update_domains
+from utils import load_config, get_domains, update_wiki_home, update_domains, extract_personal_notes
 from approve_drafts import extract_page_slug, extract_draft_metadata
 
 
@@ -60,7 +60,9 @@ def run(draft_path: Path, cfg: dict) -> None:
         return
     wiki_path = Path(domain["wiki"])
     dest_path = wiki_path / f"{slug}.md"
-    dest_path.write_text(clean_body, encoding="utf-8")
+    personal_notes = extract_personal_notes(dest_path.read_text(encoding="utf-8")) if dest_path.exists() else ""
+    final_body = clean_body.rstrip() + personal_notes if personal_notes else clean_body
+    dest_path.write_text(final_body, encoding="utf-8")
     print(f"    [OK] Pubblicata: {dest_path.name}")
 
     # Aggiorna wiki-home.md

@@ -99,3 +99,37 @@ drafts_dir = "./drafts"
 
 # How many characters of the raw source to include in each LLM prompt
 source_excerpt_chars = 3000
+
+# Maximum tokens in each LLM response
+max_tokens = 1500
+
+# LLM temperature (0.0 = deterministic, 1.0 = creative)
+temperature = 0.3
+
+# How many top entities per source file to send to the LLM (by frequency)
+max_entities_per_source = 5
+
+# ============================================================
+# Maintenance settings
+# ============================================================
+
+[maintenance]
+# Path where wiki_maintenance.py writes its report
+# (the file you open in Obsidian to review structural issues)
+report_path = "./wiki/ai/maintenance-report.md"
+
+# ============================================================
+# Chat / inbox settings (chat_responder.py)
+# ============================================================
+
+[chat]
+# Path to the inbox file that acts as your chat interface in Obsidian.
+# Create this file manually; format described in docs/user-guide.md.
+inbox_path = "./chat/inbox.md"
+
+# Inject relevant wiki pages as context into every LLM response.
+# Disable if you want faster, context-free answers.
+wiki_context = true
+
+# Maximum number of wiki pages to inject as context per query
+wiki_context_pages = 3

@@ -117,6 +117,25 @@ api_key_env = "OLLAMA_API_KEY"            # env var name for your API key
 drafts_dir  = "./drafts"
 ```
 
+### Chat inbox
+
+To use `chat_responder.py`, create a `chat/inbox.md` file and add entries in this format:
+
+```markdown
+**Q:** What is the key argument in The Bitter Lesson?
+
+**A:** *(in attesa...)*
+```
+
+Run `python chat_responder.py` — it searches your wiki for relevant pages, injects them as context, and writes the answer in-place.
+
+```toml
+[chat]
+inbox_path         = "./chat/inbox.md"
+wiki_context       = true   # inject wiki pages as context
+wiki_context_pages = 3      # max pages injected per query
+```
+
 For **cloud providers**, set your key in the environment before running:
 
 ```bash
@@ -165,6 +184,13 @@ python confidence_manager.py
 # Run a structural health check on your wiki
 python wiki_maintenance.py
 python wiki_maintenance.py --full   # + LLM-assisted accuracy check
+
+# Apply checked fixes from the maintenance report (rename links, add related pages)
+python apply_maintenance.py          # dry-run preview
+python apply_maintenance.py --apply  # apply for real
+
+# Ask the LLM a question using your wiki as context (requires chat/inbox.md)
+python chat_responder.py
 ```
 
 ---
@@ -184,7 +210,10 @@ python wiki_maintenance.py --full   # + LLM-assisted accuracy check
 | `confidence_manager.py` | Scores every wiki page, generates health report |
 | `wiki_watcher.py` | Orchestrator: monitors all directories, fires scripts on file events |
 | `wiki_maintenance.py` | Read-only wiki audit: broken links, orphan pages, bidirectionality, LLM accuracy check |
+| `apply_maintenance.py` | Applies checked actions from the maintenance report (rename links, add Related pages) with dry-run support |
+| `chat_responder.py` | Answers pending queries in `chat/inbox.md` using the LLM + wiki pages as context |
 | `run_watcher.bat` | One-click Windows launcher |
+| `docs/user-guide.md` | Practical how-to guide: "I want to do X, what do I run?" |
 | `docs/` | Design documents and implementation plans |
 
 ---

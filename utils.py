@@ -242,6 +242,20 @@ def find_best_match(entity: str, existing_files: list[str]) -> tuple[str | None,
 
 
 # -----------------------------------------------------------------------
+# Note personali — estrazione per preservare le annotazioni dell'utente
+# -----------------------------------------------------------------------
+
+def extract_personal_notes(content: str) -> str:
+    """
+    Estrae la sezione '## Note personali' e tutto ciò che segue dal contenuto di una pagina wiki.
+    Ritorna la stringa estratta (inclusa la riga H2) se presente, altrimenti stringa vuota.
+    Usata dai comandi di approve per preservare le note durante gli aggiornamenti di pagina.
+    """
+    match = re.search(r"\n## Note personali\n.*", content, re.DOTALL)
+    return match.group(0) if match else ""
+
+
+# -----------------------------------------------------------------------
 # Frontmatter YAML — parser robusto (da confidence_analyzer.py)
 # -----------------------------------------------------------------------
 

@@ -28,6 +28,7 @@ ASSISTANT_SCRIPT        = _HERE / "ingest_assistant.py"
 MANAGER_SCRIPT          = _HERE / "confidence_manager.py"
 PROCESS_PROPOSAL_SCRIPT = _HERE / "process_proposal.py"
 APPROVE_DRAFT_SCRIPT    = _HERE / "approve_draft_auto.py"
+CHAT_RESPONDER_SCRIPT   = _HERE / "chat_responder.py"
 
 # -----------------------------------------------------------------------
 # Debounce condiviso tra tutti gli handler
@@ -186,6 +187,32 @@ class RawStructureEventHandler(FileSystemEventHandler):
         print(f"  [config] Dominio '{name}' aggiunto a config.toml")
 
 
+class ChatEventHandler(FileSystemEventHandler):
+    """Monitora chat/ — triggera chat_responder.py quando un file .md viene modificato."""
+
+    def on_modified(self, event):
+        if not event.is_directory and event.src_path.endswith(".md"):
+            if _debounce_check(event.src_path):
+                self._handle_modified(event.src_path)
+
+    def on_created(self, event):
+        if not event.is_directory and event.src_path.endswith(".md"):
+            if _debounce_check(event.src_path):
+                self._handle_modified(event.src_path)
+
+    def _handle_modified(self, file_path: str) -> None:
+        name = Path(file_path).name
+        print(f"[~] Chat aggiornata: {name}")
+        print(f"    Controllo query pendenti...")
+        try:
+            subprocess.run(
+                [sys.executable, str(CHAT_RESPONDER_SCRIPT), file_path],
+                check=True,
+            )
+        except subprocess.CalledProcessError as e:
+            print(f"[!] Errore in chat_responder: {e}")
+
+
 if __name__ == "__main__":
     cfg            = load_config()
     domains        = get_domains(cfg)
@@ -200,21 +227,27 @@ if __name__ == "__main__":
         print(f"Monitoring raw [{d['name']}]: {d['raw']}")
     print(f"Monitoring proposals: {proposals_path}")
     print(f"Monitoring drafts:    {drafts_path}")
+    chat_path      = Path(cfg.get("chat", {}).get("inbox_path", "D:/obsidian_git/chat/inbox.md")).parent
     print(f"Monitoring struttura: {raw_base}")
+    print(f"Monitoring chat:      {chat_path}")
     print("------------------------------------------------------")
     print("1. Aggiungi un .md in /raw/<dominio>     -> Ingest Assistant (solo quel file)")
     print("2. Spunta sentinel in proposal           -> Process Proposal (entità selezionate)")
     print("3. Spunta sentinel in bozza              -> Approve Draft (pubblica in wiki)")
     print("4. Dopo ogni publish                     -> Confidence Manager si aggiorna")
     print("5. Nuova directory in raw/               -> Mirroring automatico in wiki/")
+    print("6. Modifica chat/inbox.md                -> Chat Responder risponde via LLM")
     print("------------------------------------------------------")
     print("Ctrl+C per fermare.")
+
+    chat_path.mkdir(parents=True, exist_ok=True)
 
     observer = Observer()
     for domain in domains:
         observer.schedule(WikiEventHandler(domain["name"]), domain["raw"], recursive=True)
     observer.schedule(ProposalEventHandler(), str(proposals_path), recursive=False)
     observer.schedule(DraftEventHandler(),    str(drafts_path),    recursive=False)
+    observer.schedule(ChatEventHandler(),     str(chat_path),      recursive=False)
     observer.schedule(
         RawStructureEventHandler(raw_base, wiki_base, config_path),
         str(raw_base),

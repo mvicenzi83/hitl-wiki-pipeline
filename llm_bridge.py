@@ -33,7 +33,9 @@ from utils import load_config, get_wiki_files, find_best_match, get_domains, sou
 # -----------------------------------------------------------------------
 
 PROMPT_NEW_PAGE = """\
-Sei un assistente specializzato nella scrittura di pagine in una knowledge base Markdown personale (stile LLM Wiki di Andrej Karpathy).
+Sei un curatore di knowledge base personale. Il tuo compito è scrivere pagine wiki \
+chiare, dense e utili — scritte come se dovessi spiegare questo concetto a te stesso \
+tra sei mesi, quando avrai dimenticato i dettagli.
 
 Devi creare una pagina wiki per il concetto: **{entity}** (tipo: {etype})
 
@@ -41,10 +43,18 @@ Devi creare una pagina wiki per il concetto: **{entity}** (tipo: {etype})
 {source_excerpt}
 --- FINE CONTESTO ---
 
-Scrivi la pagina seguendo ESATTAMENTE questo formato (non aggiungere altro):
+Regole:
+- Scrivi quanto serve per coprire il concetto in modo utile, senza padding.
+- Parti sempre dai fatti concreti presenti nel contesto.
+- Se il contesto non contiene informazioni sufficienti su un aspetto, omettilo \
+piuttosto che generalizzare.
+- Usa sotto-sezioni solo se il concetto ha componenti distinte che lo richiedono.
+- I [[wiki-links]] devono puntare a concetti reali e correlati, non a placeholder generici.
+
+Scrivi la pagina seguendo ESATTAMENTE questo formato (niente altro, niente commenti):
 
 # {entity}
-**Summary**: [una o due frasi che definiscono il concetto in modo preciso]
+**Summary**: [una o due frasi che definiscono il concetto — preciso, non generico]
 
 **Domain**: ai
 
@@ -54,18 +64,22 @@ Scrivi la pagina seguendo ESATTAMENTE questo formato (non aggiungere altro):
 
 ---
 
-[Corpo della pagina: 150-300 parole. Usa sotto-sezioni se utile. Cita fatti concreti dal contesto. Non inventare.]
+[Corpo della pagina. Denso e concreto. Usa sotto-sezioni se servono.]
 
 ## Related pages
 
-- [[link-a-pagina-correlata-1]]
-- [[link-a-pagina-correlata-2]]
+- [[concetto-correlato-reale-1]]
+- [[concetto-correlato-reale-2]]
 
-Usa [[wiki-links]] per collegare concetti correlati. Scrivi solo la pagina, niente altro.
+## Note personali
+
+*(ancora nessuna nota)*
 """
 
 PROMPT_UPDATE_PAGE = """\
-Sei un assistente specializzato nell'aggiornamento di pagine in una knowledge base Markdown personale (stile LLM Wiki di Andrej Karpathy).
+Sei un curatore di knowledge base personale. Il tuo compito è aggiornare pagine wiki \
+in modo che rimangano dense, accurate e utili — come se dovessi spiegare il concetto \
+a te stesso tra sei mesi.
 
 Devi aggiornare la pagina wiki esistente per: **{entity}**
 
@@ -77,6 +91,12 @@ Devi aggiornare la pagina wiki esistente per: **{entity}**
 {source_excerpt}
 --- FINE NUOVO CONTESTO ---
 
+Regole:
+- Integra solo ciò che aggiunge fatti concreti non già presenti nella pagina.
+- Se il nuovo contesto non aggiunge nulla di rilevante, riscrivi la pagina invariata.
+- I [[wiki-links]] aggiunti devono puntare a concetti reali e correlati, non a placeholder.
+- Non generalizzare: se il contesto è ambiguo su un punto, omettilo.
+
 Istruzioni:
 1. Mantieni la struttura e il formato esistente della pagina
 2. Integra le nuove informazioni senza duplicare quelle gia' presenti
@@ -84,15 +104,16 @@ Istruzioni:
 4. Aggiorna 'Last updated' a {today}
 5. Aggiungi eventuali nuovi [[wiki-links]] se pertinenti
 6. NON rimuovere informazioni esistenti valide
+7. NON generare ne' toccare la sezione '## Note personali' — e' gestita separatamente e verra' preservata automaticamente
 
-Scrivi la pagina aggiornata completa (non un diff), niente altro.
+Scrivi la pagina aggiornata completa (non un diff), niente commenti.
 """
 
 PROMPT_SOURCE_PAGE = """\
-Sei un assistente specializzato nella scrittura di pagine in una knowledge base Markdown personale (stile LLM Wiki di Andrej Karpathy).
+Sei un curatore di knowledge base personale. Il tuo compito è creare la pagina sorgente \
+— il nodo che rappresenta questo documento nella wiki e collega le pagine concetto estratte.
 
 Devi creare la PAGINA SORGENTE per il documento: **{source_title}**
-Questa pagina rappresenta il documento originale nella wiki e collega le pagine concetto estratte.
 
 --- TESTO DELLA SORGENTE ---
 {source_text}
@@ -106,10 +127,20 @@ Questa pagina rappresenta il documento originale nella wiki e collega le pagine 
 {child_pages_list}
 --- FINE PAGINE CONCETTO ---
 
-Scrivi la pagina seguendo ESATTAMENTE questo formato (non aggiungere altro):
+Regole:
+- Scrivi quanto serve per coprire la tesi e i contributi chiave, senza padding.
+- Parti dai fatti concreti presenti nel testo. Non generalizzare.
+- I [[wiki-links]] devono puntare a concetti reali e correlati, non a placeholder generici.
+
+Regole per **Domains**:
+- Scegli 2-5 domini tra quelli ESISTENTI sopra che siano semanticamente rilevanti.
+- Se nessun dominio esistente e' adeguato, proponi nuovi slug kebab-case (es. [[natural-language-processing]]).
+- Non usare il titolo del documento come dominio.
+
+Scrivi la pagina seguendo ESATTAMENTE questo formato (niente altro, niente commenti):
 
 # {source_title}
-**Summary**: [una o due frasi che sintetizzano la tesi centrale del documento]
+**Summary**: [una o due frasi che sintetizzano la tesi centrale del documento — preciso, non generico]
 
 **Domain**: {domain_name}
 
@@ -121,7 +152,7 @@ Scrivi la pagina seguendo ESATTAMENTE questo formato (non aggiungere altro):
 
 ---
 
-[Sintesi del documento: 150-250 parole. Argomenta la tesi principale e i contributi chiave. Non ripetere i dettagli gia' nelle pagine concetto.]
+[Corpo della pagina. Denso e concreto. Scrivi quanto serve per coprire la tesi e i contributi chiave, senza ripetere i dettagli già nelle pagine concetto.]
 
 ## Pages from this source
 
@@ -129,13 +160,11 @@ Scrivi la pagina seguendo ESATTAMENTE questo formato (non aggiungere altro):
 
 ## Related pages
 
-- [[pagina-correlata]]
+- [[fonte-o-concetto-correlato-reale]]
 
-Regole per **Domains**:
-- Scegli 2-5 domini tra quelli ESISTENTI sopra che siano semanticamente rilevanti.
-- Se nessun dominio esistente e' adeguato, proponi nuovi slug kebab-case (es. [[natural-language-processing]]).
-- Non usare il titolo del documento come dominio.
-- Scrivi solo la pagina, nient'altro.
+## Note personali
+
+*(ancora nessuna nota)*
 """
 
 def call_llm(prompt: str, cfg: dict) -> str:

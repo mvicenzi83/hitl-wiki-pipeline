@@ -18,7 +18,7 @@ import shutil
 from pathlib import Path
 from datetime import datetime
 
-from utils import load_config, get_domains, update_wiki_home, update_domains
+from utils import load_config, get_domains, update_wiki_home, update_domains, extract_personal_notes
 
 
 # Larghezza del separatore visivo nel terminale
@@ -101,7 +101,9 @@ def process_draft(
                 return "skipped"
 
             dest_path = wiki_path / f"{slug}.md"
-            dest_path.write_text(clean_body, encoding="utf-8")
+            personal_notes = extract_personal_notes(dest_path.read_text(encoding="utf-8")) if dest_path.exists() else ""
+            final_body = clean_body.rstrip() + personal_notes if personal_notes else clean_body
+            dest_path.write_text(final_body, encoding="utf-8")
 
             action = "aggiornata" if dest_path.exists() else "creata"
             print(f"  [OK] Pagina {action}: {dest_path.name}")
