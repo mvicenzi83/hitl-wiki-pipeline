@@ -67,7 +67,7 @@ raw/ai/source.md
 ## Installation
 
 ```bash
-git clone https://github.com/your-user/hitl-wiki-pipeline.git
+git clone https://github.com/mvicenzi83/hitl-wiki-pipeline.git
 cd hitl-wiki-pipeline
 pip install -r requirements.txt
 ```
